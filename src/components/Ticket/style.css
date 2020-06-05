@@ -1,0 +1,45 @@
+.price {
+  -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
+      align-self: center;
+}
+
+.price {
+  font-family: Open Sans;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 24px;
+  color: #2196F3;
+  text-transform: uppercase;
+}
+
+.logo-iata {
+  height: 36px;
+}
+
+.flight {
+  width: 100%;
+  height: 39px;
+  margin-bottom: 10px;
+}
+
+.flight:last-child {
+  margin-bottom: 0;
+}
+
+.flight__block {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-flow: column wrap;
+          flex-flow: column wrap;
+  width: 141px;
+  font-weight: 600;
+}
+
+.flight__block:last-child {
+  margin-left: 20px;
+}
