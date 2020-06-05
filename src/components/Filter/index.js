@@ -14,11 +14,11 @@ export default function Filter() {
       <label className="filter__label" htmlFor="ticCh2">Без пересадок</label>
     </div>
     <div className="filter__item">
-      <input className="filter__input" type="checkbox" name="" id="ticCh3" checked />
+      <input className="filter__input" type="checkbox" name="" id="ticCh3" />
       <label className="filter__label" htmlFor="ticCh3">1 пересадка</label>
     </div>
     <div className="filter__item">
-      <input className="filter__input" type="checkbox" name="" id="ticCh4" checked />
+      <input className="filter__input" type="checkbox" name="" id="ticCh4" />
       <label className="filter__label" htmlFor="ticCh4">2 пересадки</label>
     </div>
     <div className="filter__item">
