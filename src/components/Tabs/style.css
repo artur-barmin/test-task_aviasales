@@ -9,6 +9,7 @@
 }
 
 .tabs__item {
+  cursor: pointer;
   display: block;
   line-height: 50px;
   width: 50%;
@@ -29,6 +30,7 @@
 .tabs__item_active {
   background-color: #2196F3;
   color: #FFFFFF;
+  cursor: default;
 }
 
 .tabs__item:first-child {

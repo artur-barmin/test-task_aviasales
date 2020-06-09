@@ -1,11 +1,22 @@
-import React from 'react'
+import React, { Component } from 'react'
 import './style.css'
 
-export default function Tabs() {
-  return (
-    <ul className="tabs card">
-      <li className="tabs__item tabs__item_active">Самый дешевый</li>
-      <li className="tabs__item">Самый быстрый</li>
-    </ul>
-  );
+export default class Tabs extends Component {
+  render() {
+    return (
+      <ul
+        className="tabs card"
+        onClick={(e) => this.props.onClick(e)}
+      >
+        <li
+          data-sorter="cheapest"
+          className="tabs__item tabs__item_active"
+        >Самый дешевый</li>
+        <li
+          data-sorter="fastest"
+          className="tabs__item"
+        >Самый быстрый</li>
+      </ul>
+    );
+  }
 }
