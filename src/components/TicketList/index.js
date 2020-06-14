@@ -15,48 +15,90 @@ export default class TicketList extends Component {
     }
   }
   render() {
+    const tickets = this.state.tickets.all
+    .map((item, i) => {
+      while (i < 5) {
+        return <Ticket ticketInfo={item} />
+      }
+    });
     return (
       <div className='tickets'>
-        <Ticket />
+        {/* <Ticket ticketInfo={this.state.tickets.all[0]} /> */}
+        {tickets}
       </div>
     );
   }
-  componentDidMount() {
-    console.warn('ОБНОВЛЕНИЕ КОМПОНЕНТА');
-    fillSet(this.state.tickets);
-  }
-
-
-}
-
-async function fillSet(target) {
-  let url = new URL('https://front-test.beta.aviasales.ru');
-  let entryPath = new URL('/search', url);
-  let searchPath = new URL('/tickets?searchId=', url);
-
-  let id = await getSearchID(entryPath);
-  const path = searchPath + id;
-
-  console.group('получаем новые билеты...');
-  console.log('search id:', id, '| url:', path);
-  // получаем ВСЕ билеты
-  let ticketsAll = await getTicketList(path);
-
-  // Сохраняем в состояние
-  target.all.push(...ticketsAll);
-
-  for (let i = 0; i < 4; i += 1) {
-    target[i] = getFilteredBy(ticketsAll, i);
-  }
-  console.groupEnd();
-
-  // Сортируем
-  // for (let key in target.tickets) {
-  //   // console.log(key, '|', temp.tickets[key])
-  //   target[key] = sortMode === "cheapest" ? getCheapestTickets(target.tickets[key]) : getFastestTickets(target.tickets[key]);
-  //   console.log(target.tickets[key]);
+  // async componentDidMount() {
+  //   console.warn('ОБНОВЛЕНИЕ КОМПОНЕНТА');
+  //   let temp = await fillSet();
+  //   for (let key in temp.tickets) {
+  //     temp.tickets[key] = this.props.sort === 'cheapest' ? getCheapestTickets(temp.tickets[key]) : getFastestTickets(temp.tickets[key]);
+  //   }
+  //   this.setState(temp);
   // }
+  async componentDidMount() {
+    let url = new URL('https://front-test.beta.aviasales.ru');
+    let entryPath = new URL('/search', url);
+    let searchPath = new URL('/tickets?searchId=', url);
+    let target = {
+      tickets: {
+        all: [],
+        0: [],
+        1: [],
+        2: [],
+        3: []
+      },
+    }
+    let id = await getSearchID(entryPath);
+    const path = searchPath + id;
+    console.group('получаем новые билеты...');
+    console.log('search id:', id, '| url:', path);
+    // получаем ВСЕ билеты
+    let ticketsAll = await getTicketList(path);
+    // Сохраняем в состояние
+    target.tickets.all.push(...ticketsAll);
+    for (let i = 0; i < 4; i += 1) {
+      target.tickets[i] = getFilteredBy(ticketsAll, i);
+    }
+    console.groupEnd();
+    this.setState(target);
+  }
+
+
 }
+
+// async function fillSet() {
+//   let url = new URL('https://front-test.beta.aviasales.ru');
+//   let entryPath = new URL('/search', url);
+//   let searchPath = new URL('/tickets?searchId=', url);
+
+//   let target = {
+//     tickets: {
+//       all: [],
+//       0: [],
+//       1: [],
+//       2: [],
+//       3: []
+//     },
+//   }
+
+//   let id = await getSearchID(entryPath);
+//   const path = searchPath + id;
+
+//   console.group('получаем новые билеты...');
+//   console.log('search id:', id, '| url:', path);
+//   // получаем ВСЕ билеты
+//   let ticketsAll = await getTicketList(path);
+
+//   // Сохраняем в состояние
+//   target.tickets.all.push(...ticketsAll);
+
+//   for (let i = 0; i < 4; i += 1) {
+//     target.tickets[i] = getFilteredBy(ticketsAll, i);
+//   }
+//   console.groupEnd();
+//   return target;
+// }
 // Получаем айди сеанса поиска
 function getSearchID(url) {
   return fetch(url)
