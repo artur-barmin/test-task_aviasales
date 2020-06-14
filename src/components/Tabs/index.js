@@ -6,7 +6,7 @@ export default class Tabs extends Component {
     return (
       <ul
         className="tabs card"
-        onClick={(e) => this.props.onClick(e)}
+        onClick={this.props.onClick}
       >
         <li
           data-sorter="cheapest"

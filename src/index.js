@@ -8,6 +8,23 @@ import Sidebar from './components/Sidebar'
 import Main from './components/Main'
 
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      sort: "cheapest",
+      filters: {
+        all: true,
+        zero: false,
+        one: false,
+        two: false,
+        three: false
+      },
+    }
+    this.handleChangeFilter = this.handleChangeFilter.bind(this);
+    this.handleChangeSort = this.handleChangeSort.bind(this);
+  }
+
   render() {
     return (
       <div className='container'>
@@ -15,87 +32,87 @@ class App extends Component {
           <Header />
         </div>
         <div className="row">
-          <Sidebar />
-          <Main />
+          <Sidebar
+            filters={this.state.filters}
+            onChange={this.handleChangeFilter}
+          />
+          <Main
+            onClick={this.handleChangeSort}
+            filters={this.state.filters}
+            sort={this.state.sort}
+          />
         </div>
       </div>
     )
   }
-}
-ReactDOM.render(<App />, document.getElementById('root'))
 
-
-async function start() {
-  let url = new URL('https://front-test.beta.aviasales.ru');
-  let entryPath = new URL('/search', url);
-  let searchPath = new URL('/tickets?searchId=', url);
-
-  let id = await getSearchID(entryPath);
-  const path = searchPath + id;
-  console.log('id', id, '--- start receiving');
-  console.log(path);
-  // получаем ВСЕ билеты
-  let ticketsAll = await getTicketList(path);
-  console.log(ticketsAll.length);
-  let cheapers = getCheapestTickets(ticketsAll);
-  console.log('cheapest:', cheapers);
-}
-start();
-// Получаем айди сеанса поиска
-function getSearchID(url) {
-  return fetch(url)
-    .then(res => res.json())
-    .then(json => json.searchId);
-}
-// Получаем ВСЕ билеты в одном сеансе поиска
-async function getTicketList(url) {
-  let store = [];
-  for (let stop = false, i = 0; stop !== true && i < 100; i += 1) {
-    let pack = await getPack(url);
-    stop = pack.stop;
-    if (stop) {
-      console.log('Получение билетов: успешно');
+  // WARN: если mouseDown на табе, а mouseUp вне, то this=undefined
+  handleChangeSort(e) {
+    const cssClass = 'tabs__item_active';
+    if (e.target.classList.contains(cssClass)) {
+      return;
+    } else {
+      // отключение стилей для деактивированной сортировки
+      e.currentTarget.querySelector('.' + cssClass)
+        .classList.remove(cssClass);
+      // подключение стилей для активированной сортировки
+      e.target.classList.add(cssClass);
+      this.setState({ sort: e.target.dataset.sorter });
     }
-    store.push(...pack.tickets);
   }
-  return store;
-}
-// Получаем пачку билетов
-function getPack(url) {
-  return fetch(url)
-    .then(res => res.json())
-    .catch(err => {
-      console.log('Ошибка получения пакета', err);
-      return getPack(url);
-    })
-}
-// ФИЛЬТРАЦИЯ по пересадкам
-// Как считается кол-во пересадок: т.к. билеты "туда + обратно", то берется максимальное
-// количество пересадок на любом из этих двух полётов
-// NOTE: хотел использовать Set для оптимизированного формирования мн-в. Вроде 23мс, не особо надо
-// let ids = new Set(ticketsAll.map((item, index) => index < 10 ? index : null));
-function getFilteredBy(targetArr, filterNum) {
-  return targetArr.filter((ticket, index) => {
-    return Math.max(ticket.segments[0].stops.length, ticket.segments[1].stops.length) === filterNum;
-  })
-}
-// СОРТИРОВКА
-// Получение первых пяти самых дешевых
-function getCheapestTickets(tickets) {
-  return tickets
-    .slice()
-    .sort((a, b) => a.price - b.price)
-    .slice(0, 5);
-}
-// Получение первых пяти самых быстрых
-function getFastestTickets(tickets) {
-  return tickets
-    .slice()
-    .sort((a, b) => {
-      return a.segments.reduce((prev, item) => prev.duration + item.duration)
-        -
-        b.segments.reduce((prev, item) => prev.duration + item.duration);
-    })
-    .slice(0, 5);
+
+  handleChangeFilter(e) {
+    const filterID = e.target.id;
+    // Предотвращение состояния "все фильтры отключены"
+    if (
+      this.state.filters[filterID] === true
+      &&
+      Object.entries(this.state.filters)
+        .filter(item => item[0] !== filterID)
+        .every(item => item[1] === false)
+    ) {
+      return;
+    }
+
+    // Отключение фильтра "Все" в случае клика по любому другому
+    if (
+      this.state.filters['all'] === true
+      &&
+      this.state.filters[filterID] === false
+      &&
+      filterID !== 'all'
+    ) {
+      const st = Object.assign({}, this.state);
+      st.filters.all = false;
+      st.filters[filterID] = !st.filters[filterID];
+      this.setState(st);
+      return;
+    }
+
+    // Отключение всех фильтров в случае клика по "Все", кроме него
+    if (
+      filterID === 'all'
+      &&
+      Object.values(this.state.filters)
+        .some(item => item === true)
+    ) {
+      const st = Object.assign({}, this.state);
+      for (let key in st.filters) {
+        if (st.filters.hasOwnProperty(key)) {
+          st.filters[key] = false;
+        }
+      }
+      st.filters.all = true;
+      this.setState(st);
+      return;
+    }
+
+    // Активация фильтров во всех других случаях
+    const st = Object.assign({}, this.state);
+    st.filters[filterID] = !st.filters[filterID];
+    this.setState(st);
+  }
 }
 
+
+ReactDOM.render(<App />, document.getElementById('root'))
