@@ -14,20 +14,22 @@ export default class TicketList extends Component {
       },
     }
   }
+
   render() {
     const tickets = this.state.tickets.all
-    .map((item, i) => {
-      while (i < 5) {
-        return <Ticket ticketInfo={item} />
-      }
-    });
+      .map((item, i) => {
+        while (i < 5) {
+          return <Ticket ticketInfo={item} key={i} />
+        }
+        return null;
+      });
     return (
       <div className='tickets'>
-        {/* <Ticket ticketInfo={this.state.tickets.all[0]} /> */}
         {tickets}
       </div>
     );
   }
+
   // async componentDidMount() {
   //   console.warn('ОБНОВЛЕНИЕ КОМПОНЕНТА');
   //   let temp = await fillSet();
@@ -36,6 +38,7 @@ export default class TicketList extends Component {
   //   }
   //   this.setState(temp);
   // }
+
   async componentDidMount() {
     let url = new URL('https://front-test.beta.aviasales.ru');
     let entryPath = new URL('/search', url);
@@ -52,53 +55,26 @@ export default class TicketList extends Component {
     let id = await getSearchID(entryPath);
     const path = searchPath + id;
     console.group('получаем новые билеты...');
-    console.log('search id:', id, '| url:', path);
+    console.log('search ID: ' + id + ', URL:', path);
     // получаем ВСЕ билеты
     let ticketsAll = await getTicketList(path);
-    // Сохраняем в состояние
-    target.tickets.all.push(...ticketsAll);
+
+    // Сортировка множества "все билеты"
+    let sortedTicketsAll = this.props.sort === "cheapest" ? getCheapestTickets(ticketsAll) : getFastestTickets(ticketsAll);
+    // Сохраняем множвество "все билеты" в стейт
+    target.tickets.all.push(...sortedTicketsAll);
+
     for (let i = 0; i < 4; i += 1) {
-      target.tickets[i] = getFilteredBy(ticketsAll, i);
+      target.tickets[i] = this.props.sort === "cheapest" ? 
+      getCheapestTickets(getFilteredBy(ticketsAll, i)) : 
+      getFastestTickets(getFilteredBy(ticketsAll, i));
     }
+
     console.groupEnd();
     this.setState(target);
   }
-
-
 }
 
-// async function fillSet() {
-//   let url = new URL('https://front-test.beta.aviasales.ru');
-//   let entryPath = new URL('/search', url);
-//   let searchPath = new URL('/tickets?searchId=', url);
-
-//   let target = {
-//     tickets: {
-//       all: [],
-//       0: [],
-//       1: [],
-//       2: [],
-//       3: []
-//     },
-//   }
-
-//   let id = await getSearchID(entryPath);
-//   const path = searchPath + id;
-
-//   console.group('получаем новые билеты...');
-//   console.log('search id:', id, '| url:', path);
-//   // получаем ВСЕ билеты
-//   let ticketsAll = await getTicketList(path);
-
-//   // Сохраняем в состояние
-//   target.tickets.all.push(...ticketsAll);
-
-//   for (let i = 0; i < 4; i += 1) {
-//     target.tickets[i] = getFilteredBy(ticketsAll, i);
-//   }
-//   console.groupEnd();
-//   return target;
-// }
 // Получаем айди сеанса поиска
 function getSearchID(url) {
   return fetch(url)

@@ -18,7 +18,6 @@ export default class Flight extends Component {
   render() {
     const flights = this.state.details
       .map((segment, i) => {
-        console.dir(segment);
         return (
           <div key={i} className="flight row">
             <div className="flight__block">
@@ -86,9 +85,7 @@ function describeStops(arr) {
 }
 function getHours(timeTakeoff, minutesDuration) {
   const start = new Date(timeTakeoff);
-  console.log('Взлет:', start);
   const end = new Date(Date.parse(timeTakeoff) + minutesDuration * 60 * 1000);
-  console.log('Посадка:', end);
 
   const stH = start.getHours() < 10 ? '0' + start.getHours() : start.getHours();
   const stM = start.getMinutes() < 10 ? '0' + start.getMinutes() : start.getMinutes();
