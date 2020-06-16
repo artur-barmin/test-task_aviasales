@@ -5,18 +5,12 @@ export default class TicketList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tickets: {
-        all: [],
-        0: [],
-        1: [],
-        2: [],
-        3: []
-      },
+      tickets: []
     }
   }
 
   render() {
-    const tickets = this.state.tickets.all
+    const tickets = this.state.tickets
       .map((item, i) => {
         while (i < 5) {
           return <Ticket ticketInfo={item} key={i} />
@@ -61,21 +55,30 @@ export default class TicketList extends Component {
     // получаем ВСЕ билеты
     let ticketsAll = await getTicketList(path);
 
-    // ФИЛЬТРАЦИЯ! ----------------
+    // ФИЛЬТР БУФЕР ----------------
     let rawFiltered = [];
-    if (this.props.filters.all = true) {
+    if (this.props.filters.all === true) {
       rawFiltered = ticketsAll;
     } else {
-      let targetFilters = Object.entries(this.props.filters).filter(item => item[1] === true);
-      console.log('здесь должны быть фильтры из пропсов, которые true', targetFilters);
-      for (let ticket of ticketsAll) {
-        
-        // если ticket.stops удовлетворяет фильтрам (от 1 до 4 одновременно) из пропсов,
-        // то записываем его в let rawFiltered
-      }
-    }
-    // ФИЛЬТРАЦИЯ! ----------------
+      // Возвращает массив чисел, которые означают нужное количество пересадок.
+      // Если билет содержит хоть одно число из массива, то билет успешно проходит фильтр
+      let targetFilters = Object.entries(this.props.filters)
+      .filter(item => item[1] === true)
+      .map(item => +item);
+      console.log('здесь должны быть числа нужного кол-ва пересадок:', targetFilters);
 
+      // если ticket.stops удовлетворяет фильтрам (от 1 до 4 одновременно) из пропсов,
+      // то записываем его в let rawFiltered
+      // WARN: если активны все 4, то лишняя обработка, т.к 4 фильтра === 1 фильтр 'all'
+      rawFiltered = ticketsAll.filter(ticket => targetFilters.includes(getMaxStops(ticket)));
+    }
+    // ФИЛЬТР БУФЕР ----------------
+
+    // СОРТ БУФЕР   ----------------
+    // Сортирует билеты по дефолтному сортмоду + урезает до 5
+    let resultTicketList = this.props.sort === "cheapest" ? getCheapestTickets(ticketsAll) : getFastestTickets(ticketsAll);
+    console.log(resultTicketList);
+    // СОРТ БУФЕР   ----------------
     // WARN: буферизация, передывал под версию с буфером 16 jun, 19:50,
     // // Сортировка ПОДмножества "все билеты"
     // let sortedTicketsAll = this.props.sort === "cheapest" ? getCheapestTickets(ticketsAll) : getFastestTickets(ticketsAll);
@@ -90,7 +93,16 @@ export default class TicketList extends Component {
     console.groupEnd();
     // WARN: буферизация, передывал под версию с буфером 16 jun, 19:50,
     // this.setState(rawTickets);
+    this.setState(state => {
+      const t = Object.assign({}, state); 
+      t.tickets = resultTicketList;
+      return t;
+    });
   }
+}
+// WARN: буферизация, переделывал под версию с буфером 16 jun, 23:03
+function getMaxStops(ticket) {
+  return Math.max(ticket.segments[0].stops.length, ticket.segments[1].stops.length);
 }
 
 // Получаем айди сеанса поиска
