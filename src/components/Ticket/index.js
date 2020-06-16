@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './style.css';
-import logo from './logo_s7.png'
+// import logo from './logo_s7.png'
 import Flight from '../Flight'
 
 export default class Ticket extends Component {
@@ -9,14 +9,6 @@ export default class Ticket extends Component {
     this.state = {
       ticketInfo: {}
     }
-  }
-  static getDerivedStateFromProps(props, state) {
-    if (props.ticketInfo !== state.ticketInfo && props.ticketInfo !== undefined) {
-      return {
-        ticketInfo: props.ticketInfo
-      };
-    }
-    return null;
   }
   render() {
     return (
@@ -30,8 +22,16 @@ export default class Ticket extends Component {
           </div>
         </div>
         <Flight details={this.state.ticketInfo.segments} />
-        {/* <Flight /> */}
       </div>
     );
+  }
+  // WARN: разобраться _детально_, как это работает и нужно ли
+  static getDerivedStateFromProps(props, state) {
+    if (props.ticketInfo !== state.ticketInfo && props.ticketInfo !== undefined) {
+      return {
+        ticketInfo: props.ticketInfo
+      };
+    }
+    return null;
   }
 }

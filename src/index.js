@@ -8,7 +8,6 @@ import Sidebar from './components/Sidebar'
 import Main from './components/Main'
 
 class App extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -21,11 +20,12 @@ class App extends Component {
         three: false
       },
     }
-    this.handleChangeFilter = this.handleChangeFilter.bind(this);
-    this.handleChangeSort = this.handleChangeSort.bind(this);
   }
-
   render() {
+    // Это замыкание загоняет в буфер всё, что юзер накликает за N миллисекунд.
+    // Зачем: плохо дёргать сервер на каждое движение пользователя =>
+    // => надо поменьше писать в стейт, как вариант.
+    let handleSearchParams = this.watchClicksBeforeSearch(2000);
     return (
       <div className='container'>
         <div className="row">
@@ -34,10 +34,10 @@ class App extends Component {
         <div className="row">
           <Sidebar
             filters={this.state.filters}
-            onChange={this.handleChangeFilter}
+            onChange={handleSearchParams}
           />
           <Main
-            onClick={this.handleChangeSort}
+            onClick={handleSearchParams}
             filters={this.state.filters}
             sort={this.state.sort}
           />
@@ -45,23 +45,55 @@ class App extends Component {
       </div>
     )
   }
+  // -----------------------
+  // WARN: А НАФИГА мне замыкание? Я и с ним вызываю буферизатор, который переписывает... или нет... 65 строка, короче.
+  // Бррр, нагородил.
+  // Ладно, для начала дописать визуальный отклик фильтров, а потом этим заняться
+  watchClicksBeforeSearch(ms) {
+    const TIMEOUT_TO_SETSTATE = ms;
+    const SAVED_THIS = this;
 
-  // WARN: если mouseDown на табе, а mouseUp вне, то this=undefined
-  handleChangeSort(e) {
-    const cssClass = 'tabs__item_active';
-    if (e.target.classList.contains(cssClass)) {
-      return;
-    } else {
-      // отключение стилей для деактивированной сортировки
-      e.currentTarget.querySelector('.' + cssClass)
-        .classList.remove(cssClass);
-      // подключение стилей для активированной сортировки
-      e.target.classList.add(cssClass);
-      this.setState({ sort: e.target.dataset.sorter });
+    // инициализация буферов
+    let bufferSort = this.state.sort;
+    let bufferFilters = Object.assign({}, this.state.filters);
+
+    return function launchTimer(e) {
+      // фиксация момента клика
+      // let firstClickTime = Date.now();
+      // console.log('click FIRED, time:', firstClickTime);
+
+      // Буферизация изменений на каждый клик
+      if (e.currentTarget.classList.contains('tabs')) {
+        bufferSort = e.target.dataset.sorter;
+      } else {
+        bufferFilters = SAVED_THIS.getNewFilter(e);
+      }
+      // запуск таймера
+      /*let timer = */setTimeout(() => {
+        // TODO: установка буферов в стейт (+ сброс буферов ???)
+        SAVED_THIS.setState(state => {
+          let newState = Object.assign({}, state);
+
+          newState.sort = bufferSort;
+          newState.filters = bufferFilters;
+
+          return newState;
+        })
+      }, TIMEOUT_TO_SETSTATE);
+
+      // добавление событий в соотв. BUFFER_ + очистка таймера + перезапуск таймера
+      // if ((Date.now() - firstClickTime) < TIMEOUT_TO_SETSTATE) {
+      //   // TODO: добавление событий в буферы
+      //   clearTimeout(timer);
+      //   launchTimer(e);
+      // }
     }
   }
-
-  handleChangeFilter(e) {
+  // -----------------------
+  // эта функция валидирует действия пользователя и сразу пишет в стейт
+  // так не пойдет, надо в буфер загонять. есть идеи?
+  // как вариант, пусть возвращает буферизации копию стейта
+  getNewFilter(e) {
     const filterID = e.target.id;
     // Предотвращение состояния "все фильтры отключены"
     if (
@@ -85,8 +117,10 @@ class App extends Component {
       const st = Object.assign({}, this.state);
       st.filters.all = false;
       st.filters[filterID] = !st.filters[filterID];
-      this.setState(st);
-      return;
+      // WARN: удалить позже, оставил в момент переделки под буферизацию
+      // this.setState(st);
+      // return;
+      return st.filters;
     }
 
     // Отключение всех фильтров в случае клика по "Все", кроме него
@@ -103,14 +137,18 @@ class App extends Component {
         }
       }
       st.filters.all = true;
-      this.setState(st);
-      return;
+      // WARN: удалить позже, оставил в момент переделки под буферизацию
+      // this.setState(st);
+      // return;
+      return st.filters;
     }
 
     // Активация фильтров во всех других случаях
     const st = Object.assign({}, this.state);
     st.filters[filterID] = !st.filters[filterID];
-    this.setState(st);
+    // WARN: удалить позже, оставил в момент переделки под буферизацию
+    // this.setState(st);
+    return st.filters;
   }
 }
 
