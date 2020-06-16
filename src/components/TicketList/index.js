@@ -43,15 +43,17 @@ export default class TicketList extends Component {
     let url = new URL('https://front-test.beta.aviasales.ru');
     let entryPath = new URL('/search', url);
     let searchPath = new URL('/tickets?searchId=', url);
-    let target = {
-      tickets: {
-        all: [],
-        0: [],
-        1: [],
-        2: [],
-        3: []
-      },
-    }
+    // WARN: буферизация, передывал под версию с буфером 16 jun, 19:50,
+    // // получаем все билеты и фильтруем в массивы
+    // let rawTickets = {
+    //   tickets: {
+    //     all: [],
+    //     0: [],
+    //     1: [],
+    //     2: [],
+    //     3: []
+    //   },
+    // }
     let id = await getSearchID(entryPath);
     const path = searchPath + id;
     console.group('получаем новые билеты...');
@@ -59,19 +61,35 @@ export default class TicketList extends Component {
     // получаем ВСЕ билеты
     let ticketsAll = await getTicketList(path);
 
-    // Сортировка множества "все билеты"
-    let sortedTicketsAll = this.props.sort === "cheapest" ? getCheapestTickets(ticketsAll) : getFastestTickets(ticketsAll);
-    // Сохраняем множвество "все билеты" в стейт
-    target.tickets.all.push(...sortedTicketsAll);
-
-    for (let i = 0; i < 4; i += 1) {
-      target.tickets[i] = this.props.sort === "cheapest" ? 
-      getCheapestTickets(getFilteredBy(ticketsAll, i)) : 
-      getFastestTickets(getFilteredBy(ticketsAll, i));
+    // ФИЛЬТРАЦИЯ! ----------------
+    let rawFiltered = [];
+    if (this.props.filters.all = true) {
+      rawFiltered = ticketsAll;
+    } else {
+      let targetFilters = Object.entries(this.props.filters).filter(item => item[1] === true);
+      console.log('здесь должны быть фильтры из пропсов, которые true', targetFilters);
+      for (let ticket of ticketsAll) {
+        
+        // если ticket.stops удовлетворяет фильтрам (от 1 до 4 одновременно) из пропсов,
+        // то записываем его в let rawFiltered
+      }
     }
+    // ФИЛЬТРАЦИЯ! ----------------
 
+    // WARN: буферизация, передывал под версию с буфером 16 jun, 19:50,
+    // // Сортировка ПОДмножества "все билеты"
+    // let sortedTicketsAll = this.props.sort === "cheapest" ? getCheapestTickets(ticketsAll) : getFastestTickets(ticketsAll);
+    // // Сохраняем ПОДмножества "все билеты" в стейт
+    // rawTickets.tickets.all.push(...sortedTicketsAll);
+    // // Сортировка всех остальных ПОДмножеств
+    // for (let i = 0; i < 4; i += 1) {
+    //   rawTickets.tickets[i] = this.props.sort === "cheapest" ? 
+    //   getCheapestTickets(getFilteredBy(ticketsAll, i)) : 
+    //   getFastestTickets(getFilteredBy(ticketsAll, i));
+    // }
     console.groupEnd();
-    this.setState(target);
+    // WARN: буферизация, передывал под версию с буфером 16 jun, 19:50,
+    // this.setState(rawTickets);
   }
 }
 
