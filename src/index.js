@@ -19,13 +19,14 @@ class App extends Component {
         two: false,
         three: false
       },
+      timeoutBeforeSearch: 2000
     }
   }
   render() {
     // Это замыкание загоняет в буфер всё, что юзер накликает за N миллисекунд.
     // Зачем: плохо дёргать сервер на каждое движение пользователя =>
     // => надо поменьше писать в стейт, как вариант.
-    let handleSearchParams = this.watchClicksBeforeSearch(2000);
+    let handleSearchParams = this.bufferClicks(this.state.timeoutBeforeSearch);
     return (
       <div className='container'>
         <div className="row">
@@ -35,6 +36,7 @@ class App extends Component {
           <Sidebar
             filters={this.state.filters}
             onChange={handleSearchParams}
+            timeout={this.state.timeoutBeforeSearch}
           />
           <Main
             onClick={handleSearchParams}
@@ -49,7 +51,7 @@ class App extends Component {
   // WARN: А НАФИГА мне замыкание? Я и с ним вызываю буферизатор, который переписывает... или нет... 65 строка, короче.
   // Бррр, нагородил.
   // Ладно, для начала дописать визуальный отклик фильтров, а потом этим заняться
-  watchClicksBeforeSearch(ms) {
+  bufferClicks(ms) {
     const TIMEOUT_TO_SETSTATE = ms;
     const SAVED_THIS = this;
 
@@ -69,8 +71,8 @@ class App extends Component {
         bufferFilters = SAVED_THIS.getNewFilter(e);
       }
       // запуск таймера
-      /*let timer = */setTimeout(() => {
-        // TODO: установка буферов в стейт (+ сброс буферов ???)
+      setTimeout(() => {
+        // TODO: сброс буферов???
         SAVED_THIS.setState(state => {
           let newState = Object.assign({}, state);
 

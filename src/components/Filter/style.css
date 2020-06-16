@@ -79,6 +79,10 @@
   border: 1px solid #2196F3;
   background-image: url("../../layout/checkmark.svg");
 }
+/* рассинхрон с SASS */
+.buffered + label::before {
+  background-color:#ccc;
+}
 
 .filter__input:not(:disabled):not(:checked) + label:hover::before {
   border-color: #2196F3;

@@ -39,6 +39,15 @@ h1, h2, h3, h4, h5, h6 {
   -ms-flex-line-pack: start;
       align-content: flex-start;
 }
+/* рассинхрон с SASS */
+@media (max-width: 959px) {
+  .container {
+    width: 100%;
+  }
+  .row {
+    flex-flow: row wrap;
+  }
+}
 
 .row {
   width: 100%;

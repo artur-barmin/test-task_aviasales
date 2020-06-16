@@ -8,6 +8,7 @@ export default class Sidebar extends Component {
         <Filter
           filters={this.props.filters}
           onChange={this.props.onChange}
+          timeout={this.props.timeout}
         />
       </div>
     );

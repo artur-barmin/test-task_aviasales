@@ -11,8 +11,21 @@ export default class Filter extends Component {
     );
   }
   handleClick(e) {
-    // TODO: добавить мгновенный UI-фидбек на клик. Функция с переключением классов + CSS
+    this.highlightBuffered(e, this.props.timeout);
     this.props.onChange(e);
+  }
+  // TODO: добавить мгновенный UI-фидбек на клик. Функция с переключением CSS-классов
+  // как связать удаление .buffered с обновлением state.filters?
+  // вариант 1: передавать delay в this.highlightBuffered
+  // вариант 2: фильтры ж нам и так передаются в пропсах? мб на них завязать?
+  // UPD: выбрал 1. Проблемы: 
+  // - отдельные таймеры (исчезают не одновременно) 
+  // - нет отклика на повторный клик. 
+  // Че, пацаны, closure?
+  highlightBuffered(e, ms) {
+    let watchingCheckbox = e.target;
+    watchingCheckbox.classList.add('buffered');
+    setTimeout(() => {watchingCheckbox.classList.remove('buffered');}, ms)
   }
   renderFilterItems() {
     const FILTER_RAW = Object.entries(this.props.filters);
