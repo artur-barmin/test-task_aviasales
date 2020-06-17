@@ -14,10 +14,10 @@ class App extends Component {
       sort: "cheapest",
       filters: {
         all: true,
-        zero: false,
-        one: false,
-        two: false,
-        three: false
+        0: false,
+        1: false,
+        2: false,
+        3: false
       },
       timeoutBeforeSearch: 2000
     }

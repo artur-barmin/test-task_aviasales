@@ -49,9 +49,9 @@ export default class Filter extends Component {
   }
   _filterText = {
     all: 'Все',
-    zero: 'Без пересадок',
-    one: '1 пересадка',
-    two: '2 пересадки',
-    three: '3 пересадки'
+    0: 'Без пересадок',
+    1: '1 пересадка',
+    2: '2 пересадки',
+    3: '3 пересадки'
   }
 }
