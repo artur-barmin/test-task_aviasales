@@ -1,45 +1,74 @@
 .price {
-  -ms-flex-item-align: center;
-      -ms-grid-row-align: center;
-      align-self: center;
+    -ms-flex-item-align: center;
+    -ms-grid-row-align: center;
+    align-self: center;
 }
 
 .price {
-  font-family: Open Sans;
-  font-style: normal;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 24px;
-  color: #2196F3;
-  text-transform: uppercase;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 24px;
+    color: #2196F3;
+    text-transform: uppercase;
 }
 
 .logo-iata {
-  height: 36px;
+    height: 36px;
 }
 
 .flight {
-  width: 100%;
-  height: 39px;
-  margin-bottom: 10px;
+    height: 39px;
+    margin-bottom: 10px;
 }
 
 .flight:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .flight__block {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-      -ms-flex-flow: column wrap;
-          flex-flow: column wrap;
-  width: 141px;
-  font-weight: 600;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-flow: column wrap;
+    flex-flow: column wrap;
+    font-weight: 600;
+    width: 140px;
 }
 
 .flight__block:last-child {
-  margin-left: 20px;
+    margin-left: 20px;
+}
+
+.ticket {
+    display: flex;
+    flex-flow: column;
+}
+
+@media (max-width: 500px) {
+    .ticket {
+        padding: 10px;
+        /* margin: 10px 0; */
+    }
+    .ticket {
+        flex-flow: row wrap;
+    }
+    .flight__block {
+        min-width: 100px;
+        width: 33%;
+    }
+    .flight__block:last-child {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 330px) {
+    .ticket .flight {
+        flex-flow: column nowrap;
+        width: 50%;
+        height: 100%;
+    }
 }
