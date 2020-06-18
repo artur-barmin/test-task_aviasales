@@ -60,6 +60,7 @@ class App extends Component {
     let bufferFilters = Object.assign({}, this.state.filters);
 
     let timer;
+    let animTimer;
     return function launchTimer(e) {
       clearTimeout(timer);
       // фиксация момента клика
@@ -72,6 +73,21 @@ class App extends Component {
       } else {
         bufferFilters = SAVED_THIS.getNewFilter(e);
       }
+      // запуск анимации ожидания
+      clearTimeout(animTimer);
+      let bufferAnim = document.querySelector('.timeout');
+      let animTip = document.querySelector('.timeout__tip');
+
+      animTip.className = 'timeout__tip';
+      bufferAnim.className = 'timeout';
+
+      animTip.classList.add('timeout__tip_run');
+      bufferAnim.classList.add('timeout_run');
+
+      animTimer = setTimeout(() => {
+        animTip.classList.remove('timeout__tip_run');
+        bufferAnim.classList.remove('timeout_run');
+      }, SAVED_THIS._timeoutBeforeSearch);
       // запуск таймера
       timer = setTimeout(() => {
         // TODO: сброс буферов???
