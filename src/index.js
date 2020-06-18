@@ -59,7 +59,9 @@ class App extends Component {
     let bufferSort = this.state.sort;
     let bufferFilters = Object.assign({}, this.state.filters);
 
+    let timer;
     return function launchTimer(e) {
+      clearTimeout(timer);
       // фиксация момента клика
       // let firstClickTime = Date.now();
       // console.log('click FIRED, time:', firstClickTime);
@@ -71,7 +73,7 @@ class App extends Component {
         bufferFilters = SAVED_THIS.getNewFilter(e);
       }
       // запуск таймера
-      setTimeout(() => {
+      timer = setTimeout(() => {
         // TODO: сброс буферов???
         SAVED_THIS.setState(state => {
           let newState = Object.assign({}, state);
