@@ -19,14 +19,14 @@ class App extends Component {
         2: false,
         3: false
       },
-      timeoutBeforeSearch: 2000
     }
   }
+  _timeoutBeforeSearch = 2000;
   render() {
     // Это замыкание загоняет в буфер всё, что юзер накликает за N миллисекунд.
     // Зачем: плохо дёргать сервер на каждое движение пользователя =>
     // => надо поменьше писать в стейт, как вариант.
-    let handleSearchParams = this.bufferClicks(this.state.timeoutBeforeSearch);
+    let handleSearchParams = this.bufferClicks(this._timeoutBeforeSearch);
     return (
       <div className='container'>
         <div className="row">
@@ -36,7 +36,7 @@ class App extends Component {
           <Sidebar
             filters={this.state.filters}
             onChange={handleSearchParams}
-            timeout={this.state.timeoutBeforeSearch}
+            timeout={this._timeoutBeforeSearch}
           />
           <Main
             onClick={handleSearchParams}
@@ -92,9 +92,7 @@ class App extends Component {
     }
   }
   // -----------------------
-  // эта функция валидирует действия пользователя и сразу пишет в стейт
-  // так не пойдет, надо в буфер загонять. есть идеи?
-  // как вариант, пусть возвращает буферизации копию стейта
+  // Управление поведением фильтра + возврат списка активных фильтров
   getNewFilter(e) {
     const filterID = e.target.id;
     // Предотвращение состояния "все фильтры отключены"
@@ -105,9 +103,9 @@ class App extends Component {
         .filter(item => item[0] !== filterID)
         .every(item => item[1] === false)
     ) {
-      return;
+      let st = Object.assign({}, this.state);
+      return st.filters;
     }
-
     // Отключение фильтра "Все" в случае клика по любому другому
     if (
       this.state.filters['all'] === true
@@ -119,12 +117,8 @@ class App extends Component {
       const st = Object.assign({}, this.state);
       st.filters.all = false;
       st.filters[filterID] = !st.filters[filterID];
-      // WARN: удалить позже, оставил в момент переделки под буферизацию
-      // this.setState(st);
-      // return;
       return st.filters;
     }
-
     // Отключение всех фильтров в случае клика по "Все", кроме него
     if (
       filterID === 'all'
@@ -139,17 +133,11 @@ class App extends Component {
         }
       }
       st.filters.all = true;
-      // WARN: удалить позже, оставил в момент переделки под буферизацию
-      // this.setState(st);
-      // return;
       return st.filters;
     }
-
     // Активация фильтров во всех других случаях
     const st = Object.assign({}, this.state);
     st.filters[filterID] = !st.filters[filterID];
-    // WARN: удалить позже, оставил в момент переделки под буферизацию
-    // this.setState(st);
     return st.filters;
   }
 }
