@@ -28,7 +28,10 @@ export default class Filter extends Component {
     setTimeout(() => {watchingCheckbox.classList.remove('buffered');}, ms)
   }
   renderFilterItems() {
-    const FILTER_RAW = Object.entries(this.props.filters);
+    const FILTER_RAW = Object
+    .entries(this.props.filters)
+    // WARN: а можно без сортировки?
+    .sort((a,b) => {if (a[0] === 'all') return -1; return 0;});
     const FILTER_ITEMS = [];
     for (let i = 0; i < FILTER_RAW.length; i += 1) {
       const [filterName, filterStatus] = FILTER_RAW[i];

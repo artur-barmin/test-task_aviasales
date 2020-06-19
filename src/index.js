@@ -23,10 +23,13 @@ class App extends Component {
   }
   _timeoutBeforeSearch = 2000;
   render() {
-    // Это замыкание загоняет в буфер всё, что юзер накликает за N миллисекунд.
+    
+    // Это замыкание даёт время юзеру прокликать все нужные контролы,
+    // и только потом запросить билеты с сервера.
     // Зачем: плохо дёргать сервер на каждое движение пользователя =>
     // => надо поменьше писать в стейт, как вариант.
-    let handleSearchParams = this.bufferClicks(this._timeoutBeforeSearch);
+    let handleSearchParams = this.bufferingDecorator(this._timeoutBeforeSearch);
+
     return (
       <div className='container'>
         <div className="row">
@@ -48,68 +51,51 @@ class App extends Component {
     )
   }
   // -----------------------
-  // WARN: А НАФИГА мне замыкание? Я и с ним вызываю буферизатор, который переписывает... или нет... 65 строка, короче.
-  // Бррр, нагородил.
-  // Ладно, для начала дописать визуальный отклик фильтров, а потом этим заняться
-  bufferClicks(ms) {
+  bufferingDecorator(ms) {
     const TIMEOUT_TO_SETSTATE = ms;
     const SAVED_THIS = this;
-
     // инициализация буферов
+    // WARN: а нужны отдельные буферы? Мб один на весь стейт?
     let bufferSort = this.state.sort;
     let bufferFilters = Object.assign({}, this.state.filters);
-
-    let timer;
+    // Таймеры объяв-ся здесь для сброса в начале обработчика
+    let bufferTimer;
     let animTimer;
-    return function launchTimer(e) {
-      clearTimeout(timer);
-      // фиксация момента клика
-      // let firstClickTime = Date.now();
-      // console.log('click FIRED, time:', firstClickTime);
 
-      // Буферизация изменений на каждый клик
+    return function (e) {
+      // Сброс таймеров на случай, если это не первый клик
+      clearTimeout(bufferTimer);
+      clearTimeout(animTimer);
+      // Перезапись буфера новым состоянием контролов на момент клика
       if (e.currentTarget.classList.contains('tabs')) {
         bufferSort = e.target.dataset.sorter;
       } else {
         bufferFilters = SAVED_THIS.getNewFilter(e);
       }
       // запуск анимации ожидания
-      clearTimeout(animTimer);
       let bufferAnim = document.querySelector('.timeout');
       let animTip = document.querySelector('.timeout__tip');
-
       animTip.className = 'timeout__tip';
       bufferAnim.className = 'timeout';
-
       animTip.classList.add('timeout__tip_run');
       bufferAnim.classList.add('timeout_run');
-
       animTimer = setTimeout(() => {
         animTip.classList.remove('timeout__tip_run');
         bufferAnim.classList.remove('timeout_run');
       }, SAVED_THIS._timeoutBeforeSearch);
       // запуск таймера
-      timer = setTimeout(() => {
-        // TODO: сброс буферов???
+      bufferTimer = setTimeout(() => {
         SAVED_THIS.setState(state => {
           let newState = Object.assign({}, state);
-
           newState.sort = bufferSort;
           newState.filters = bufferFilters;
-
           return newState;
-        })
+        });
+        // WARN: нужно ли удалять таймер по айди в конце выполнения?
+        clearTimeout(bufferTimer);
       }, TIMEOUT_TO_SETSTATE);
-
-      // добавление событий в соотв. BUFFER_ + очистка таймера + перезапуск таймера
-      // if ((Date.now() - firstClickTime) < TIMEOUT_TO_SETSTATE) {
-      //   // TODO: добавление событий в буферы
-      //   clearTimeout(timer);
-      //   launchTimer(e);
-      // }
     }
   }
-  // -----------------------
   // Управление поведением фильтра + возврат списка активных фильтров
   getNewFilter(e) {
     const filterID = e.target.id;
