@@ -1,37 +1,21 @@
-import React, { Component } from 'react';
+import React from 'react';
 import './style.css';
-// import logo from './logo_s7.png'
 import Flight from '../Flight'
 
-export default class Ticket extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      ticketInfo: {}
-    }
-  }
-  render() {
-    return (
-      <div className="card ticket">
-        <div className="row row_btwn">
-          <span className="price">
-            {`${this.state.ticketInfo.price} Р`}
+export default function Ticket(props) {
+  return (
+    <div className="card ticket">
+      <div className="row row_btwn">
+        <span className="price">
+          {props.ticketInfo.price} Р
           </span>
-          <div className="logo-iata">
-            <img src={`http://pics.avs.io/99/36/${this.state.ticketInfo.carrier}.png`} alt={this.state.ticketInfo.carrier} />
-          </div>
+        <div className="logo-iata">
+          <img
+            src={`http://pics.avs.io/99/36/${props.ticketInfo.carrier}.png`}
+            alt={props.ticketInfo.carrier} />
         </div>
-        <Flight details={this.state.ticketInfo.segments} />
       </div>
-    );
-  }
-  // WARN: разобраться _детально_, как это работает и нужно ли
-  static getDerivedStateFromProps(props, state) {
-    if (props.ticketInfo !== state.ticketInfo && props.ticketInfo !== undefined) {
-      return {
-        ticketInfo: props.ticketInfo
-      };
-    }
-    return null;
-  }
+      <Flight details={props.ticketInfo.segments} />
+    </div>
+  );
 }
