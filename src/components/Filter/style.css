@@ -71,8 +71,8 @@
   background-repeat: no-repeat;
   background-position: center center;
   background-size: 50% 50%;
-  -webkit-transition: 0.2s;
-  transition: 0.2s;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
 }
 
 .filter__input:checked + label::before {
@@ -81,7 +81,7 @@
 }
 /* рассинхрон с SASS */
 .buffered + label::before {
-  background-color:#ccc;
+  background-color:#a2d5ff;
 }
 
 .filter__input:not(:disabled):not(:checked) + label:hover::before {
