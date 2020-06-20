@@ -70,6 +70,7 @@ class App extends Component {
       // Перезапись буфера новым состоянием контролов на момент клика
       if (e.currentTarget.classList.contains('tabs')) {
         bufferSort = e.target.dataset.sorter;
+        highlightTabs(e)
       } else {
         bufferFilters = SAVED_THIS.getNewFilter(e);
         highlightBuffered(e, TIMEOUT_TO_SETSTATE)
@@ -158,6 +159,15 @@ function highlightBuffered(e, ms) {
   let watchingCheckbox = e.target;
   watchingCheckbox.classList.add('buffered');
   setTimeout(() => { watchingCheckbox.classList.remove('buffered'); }, ms)
+}
+function highlightTabs(e) {
+  const cssClass = 'tabs__item_active';
+  if (e.target.classList.contains(cssClass)) {
+    return;
+  } else {
+    e.currentTarget.querySelector('.' + cssClass).classList.remove(cssClass);
+    e.target.classList.add(cssClass);
+  }
 }
 
 ReactDOM.render(<App />, document.getElementById('root'))
