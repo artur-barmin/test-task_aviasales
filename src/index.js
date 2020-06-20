@@ -71,6 +71,7 @@ class App extends Component {
         bufferSort = e.target.dataset.sorter;
       } else {
         bufferFilters = SAVED_THIS.getNewFilter(e);
+        highlightBuffered(e, TIMEOUT_TO_SETSTATE)
       }
       // запуск анимации ожидания
       let bufferAnim = document.querySelector('.timeout');
@@ -145,6 +146,17 @@ class App extends Component {
     return st.filters;
   }
 }
-
+// Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
+// Вопрос: как связать удаление .buffered с обновлением state.filters?
+// вариант 1: передавать delay в this.highlightBuffered
+// вариант 2: props.filters
+// UPD: выбрал 1. Проблемы:  
+// - отдельные таймеры (исчезают не одновременно) 
+// - нет отклика на повторный клик. 
+function highlightBuffered(e, ms) {
+  let watchingCheckbox = e.target;
+  watchingCheckbox.classList.add('buffered');
+  setTimeout(() => { watchingCheckbox.classList.remove('buffered'); }, ms)
+}
 
 ReactDOM.render(<App />, document.getElementById('root'))
