@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 
 import './style.css'
 
+import WaintingTimer from './components/WaitingTimer'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Main from './components/Main'
@@ -23,7 +24,7 @@ class App extends Component {
   }
   _timeoutBeforeSearch = 2000;
   render() {
-    
+
     // Это замыкание даёт время юзеру прокликать все нужные контролы,
     // и только потом запросить билеты с сервера.
     // Зачем: плохо дёргать сервер на каждое движение пользователя =>
@@ -32,6 +33,7 @@ class App extends Component {
 
     return (
       <div className='container'>
+        <WaintingTimer />
         <div className="row">
           <Header />
         </div>

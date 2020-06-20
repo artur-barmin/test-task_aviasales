@@ -2,20 +2,20 @@
   position: fixed;
   top: 0;
   left: 0;
-  width:0;
   height: 2em;
   background-color: #2196F3;
+
+  width: 0;
   opacity: 0;
   transition: .5s;
 }
 .timeout_run {
   opacity: 1;
-  transition: 2s;
   width: 100%;
+  transition: 2s;
 }
 .timeout__tip {
   color: #E5E5E5;
-  font-style: italic;
   font-weight: 400;
   position: fixed;
   top: 0;
@@ -24,10 +24,10 @@
   width: 100%;
   margin: 0 auto;
   z-index: 1000;
+
   opacity: 0;
 }
 .timeout__tip_run {
   opacity: 1;
-  transition-delay: 0.5s;
-  transition-duration: 0.5s;
+  transition: 0.5s;
 }
