@@ -1,16 +1,13 @@
-import React, { Component } from 'react'
+import React from 'react'
 import Filter from '../Filter'
 
-export default class Sidebar extends Component {
-  render() {
-    return (
-      <div className="card row__col-side">
-        <Filter
-          filters={this.props.filters}
-          onChange={this.props.onChange}
-          timeout={this.props.timeout}
-        />
-      </div>
-    );
-  }
+export default function Sidebar(props) {
+  return (
+    <div className="card row__col-side">
+      <Filter
+        filters={props.filters}
+        onChange={props.onChange}
+      />
+    </div>
+  );
 }

@@ -39,7 +39,6 @@ class App extends Component {
           <Sidebar
             filters={this.state.filters}
             onChange={handleSearchParams}
-            timeout={this._timeoutBeforeSearch}
           />
           <Main
             onClick={handleSearchParams}
