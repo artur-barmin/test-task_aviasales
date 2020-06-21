@@ -50,43 +50,32 @@ class App extends Component {
   // и только потом запросить билеты с сервера.
   // Зачем: плохо дёргать сервер на каждое движение пользователя =>
   // => надо поменьше писать в стейт, как вариант.
-  bufferingDecorator(ms) {
-    const TIMEOUT_TO_SETSTATE = ms;
-    const SAVED_THIS = this;
+  bufferingDecorator = (ms) => {
     let buffer = Object.assign({}, this.state);
     // Таймеры объяв-ся здесь для сброса первым делом, если это не 1й клик
     let bufferTimer;
-    let animTimer;
-    return function (e) {
+    let runWaitingTimer = waitingTimerDecorator(ms);
+    return (e) => {
       clearTimeout(bufferTimer);
-      clearTimeout(animTimer);
       // Перезапись буфера новым состоянием контролов на момент клика
       if (e.currentTarget.classList.contains('tabs')) {
         buffer.sort = e.target.dataset.sorter;
         highlightTabs(e);
       } else {
-        buffer.filters = SAVED_THIS.getCorrectFilters(e);
-        highlightBuffered(e, TIMEOUT_TO_SETSTATE)
+        buffer.filters = this.getCorrectFilters(e);
+        highlightBuffered(e, ms)
       }
       // запуск анимации ожидания
-      let bufferAnim = document.querySelector('.timeout');
-      let animTip = document.querySelector('.timeout__tip');
-      animTip.className = 'timeout__tip';
-      bufferAnim.className = 'timeout';
-      animTip.classList.add('timeout__tip_run');
-      bufferAnim.classList.add('timeout_run');
-      animTimer = setTimeout(() => {
-        animTip.classList.remove('timeout__tip_run');
-        bufferAnim.classList.remove('timeout_run');
-      }, SAVED_THIS._timeoutBeforeSearch);
+      runWaitingTimer();
       // запуск таймера записи буфера
       bufferTimer = setTimeout(() => {
-        SAVED_THIS.setState(() => buffer);
+        this.setState(() => buffer);
         // WARN: нужно ли удалять таймер в конце выполнения?
         clearTimeout(bufferTimer);
-      }, TIMEOUT_TO_SETSTATE);
+      }, ms);
     }
   }
+
   // Проверка (можно ли изменить состояние чекбокса) и возврат всех чекбоксов
   getCorrectFilters(e) {
     const FILTERS = this.state.filters;
@@ -119,7 +108,23 @@ class App extends Component {
     return st.filters;
   }
 }
-
+function waitingTimerDecorator(ms) {
+  let timer;
+  return () => {
+    clearTimeout(timer);
+    let bufferAnim = document.querySelector('.timeout');
+    let animTip = document.querySelector('.timeout__tip');
+    animTip.className = 'timeout__tip';
+    bufferAnim.className = 'timeout';
+    animTip.classList.add('timeout__tip_run');
+    bufferAnim.classList.add('timeout_run');
+    timer = setTimeout(() => {
+      animTip.classList.remove('timeout__tip_run');
+      bufferAnim.classList.remove('timeout_run');
+    }, ms);
+  }
+}
+// ***Временная подсветка кликнутых чекбоксов***
 // Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
 // Вопрос: как связать удаление .buffered с обновлением state.filters?
 // вариант 1: передавать delay в this.highlightBuffered
@@ -127,7 +132,6 @@ class App extends Component {
 // UPD: выбрал 1. Проблемы:  
 // - отдельные таймеры (исчезают не одновременно) 
 // - нет отклика на повторный клик. 
-// ***Временная подсветка кликнутых чекбоксов***
 function highlightBuffered(e, ms) {
   let watchingCheckbox = e.target;
   watchingCheckbox.classList.add('buffered');
