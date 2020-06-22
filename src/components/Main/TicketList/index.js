@@ -1,9 +1,9 @@
 import React from 'react'
-import Ticket from '../Ticket'
+import Ticket from './Ticket'
 
 export default function TicketList(props) {
   if (!props.ticketsArray) {
-    return <p className='row'>Загрузка билетов</p>;
+    return <p className='row'>Подождите, загружаем новые билеты</p>;
   }
   return (
     <div className='tickets'>

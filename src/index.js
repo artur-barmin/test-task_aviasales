@@ -13,13 +13,7 @@ class App extends Component {
     super(props);
     this.state = {
       sort: "cheapest",
-      filters: {
-        all: true,
-        0: false,
-        1: false,
-        2: false,
-        3: false
-      },
+      filters: { all: true, 0: false, 1: false, 2: false, 3: false },
     }
   }
   _timeoutBeforeSearch = 2000;
@@ -46,22 +40,22 @@ class App extends Component {
     )
   }
   // Проверка (можно ли изменить состояние чекбокса) и возврат всех чекбоксов
-  getCorrectFilters(e) {
+  getValidCheckboxes(e) {
     const FILTERS = this.state.filters;
-    const filterID = e.target.id;
+    const id = e.target.id;
     // Предотвращение состояния "все фильтры отключены"
-    if (FILTERS[filterID] && Object.entries(FILTERS).filter(item => item[0] !== filterID).every(item => !item[1])) {
+    if (FILTERS[id] && Object.entries(FILTERS).filter(item => item[0] !== id).every(item => !item[1])) {
       return FILTERS;
     }
     // Отключение фильтра "Все" в случае клика по любому другому
-    if (FILTERS['all'] && !FILTERS[filterID] && filterID !== 'all') {
+    if (FILTERS['all'] && !FILTERS[id] && id !== 'all') {
       const st = Object.assign({}, this.state);
       st.filters['all'] = false;
-      st.filters[filterID] = !st.filters[filterID];
+      st.filters[id] = !st.filters[id];
       return st.filters;
     }
     // Отключение всех фильтров в случае клика по "Все", кроме него
-    if (filterID === 'all' && Object.values(FILTERS).some(item => item)) {
+    if (id === 'all' && Object.values(FILTERS).some(item => item)) {
       const st = Object.assign({}, this.state);
       for (let item in st.filters) {
         if (st.filters.hasOwnProperty(item)) {
@@ -73,77 +67,91 @@ class App extends Component {
     }
     // Активация фильтров во всех других случаях
     const st = Object.assign({}, this.state);
-    st.filters[filterID] = !st.filters[filterID];
+    st.filters[id] = !st.filters[id];
     return st.filters;
   }
 }
-// Это замыкание даёт время юзеру прокликать все нужные контролы,
-// и только потом запросить билеты с сервера.
-// Зачем: плохо дёргать сервер на каждое движение пользователя =>
-// => надо поменьше писать в стейт, как вариант.
-// Буфер сохраняет последний клик и обновляет время ожидания
-const bufferingDecorator = (context, ms) => {
-  const delaySetState         = rebootableDelayDecorator(ms, null, updateState);
-  const runAnimationWhenDelay = rebootableDelayDecorator(ms, runTimerUI, stopTimerUI);
-  const BUFFER = Object.assign({}, context.state);
-  return (e) => {
-    // Сохранение в буфер состояния контролов на момент последнего клика
-    if (e.currentTarget.classList.contains('tabs')) {
-      BUFFER.sort = e.target.dataset.sorter;
-      highlightTabs(e);
-    } else {
-      BUFFER.filters = context.getCorrectFilters(e);
-      highlightBuffered(e, ms)
-    }
-    // запуск таймера и анимации перед записью буфера в стейт
-    runAnimationWhenDelay();
-    delaySetState(context, BUFFER);
-  }
+// хелпер для извлеченного метода bufferingDecorator
+function updateState(context, newState) {
+  context.setState(() => newState);
 }
-// 
+// обеспечивает продлевающуюся задержку
 function rebootableDelayDecorator(ms, funcStart, funcEnd) {
   let timer;
   return (...args) => {
     clearTimeout(timer);
     if (funcStart) {
-      funcStart.call(this, ...args);
+      funcStart(...args);
     }
-    timer = setTimeout(() => funcEnd(...args), ms)
+    timer = setTimeout(() => {
+      funcEnd(...args);
+      clearTimeout(timer);
+    }, ms);
   }
 }
-function updateState(context, newState) {
-  context.setState(() => newState);
+// --------------------------------------
+// Буферизация кликов перед установкой стейта (и последующим запросом билетов)
+// Зачем: плохо дёргать сервер на каждое движение юзера
+// UPD: больше не упражняться с замыканиями, ну нафиг
+const bufferingDecorator = (context, ms) => {
+  const BUFFER = Object.assign({}, context.state);
+  const UIbufferFilters = new Set();
+  const setStateAfterDelay = rebootableDelayDecorator(ms, null, updateState);
+  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, css_runWT, css_stopWT);
+  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, css_cbON, css_cbOFF);
+  return (e) => {
+    // Сохранение в буфер состояния контролов на момент последнего клика
+    if (e.currentTarget.classList.contains('tabs')) {
+      BUFFER.sort = e.target.dataset.sorter;
+      highlightActiveTab(e);
+    } else {
+      BUFFER.filters = context.getValidCheckboxes(e);
+    }
+    // запуск таймера и анимации перед записью буфера в стейт
+    showWaitingTimerWhileDelay();
+    highlightCheckboxWhileDelay(UIbufferFilters, e);
+    setStateAfterDelay(context, BUFFER);
+  }
 }
-function runTimerUI() {
-  let bufferAnim = document.querySelector('.timeout');
-  let animTip = document.querySelector('.timeout__tip');
+// ***Подсветка кликнутых чекбоксов while delay***
+// Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
+// Проблема: это управляемый компонент
+// Как связать удаление .buffered с обновлением state.filters?
+// вариант 1: передавать delay в highlightFilterWhileDelay
+// вариант 2: props.filters
+// UPD: выбрал 1й вариант. Проблема: рассинхрон с getValidCheckboxes
+function css_cbON(stor, e) {
+  const cssClass = 'buffered';
+  if (e.target.matches('.' + cssClass)) {
+    stor.delete(e.target);
+    e.target.classList.remove(cssClass);
+  } else {
+    stor.add(e.target);
+    e.target.classList.add(cssClass);
+  }
+}
+function css_cbOFF(store) {
+  const cssClass = 'buffered';
+  store.forEach(item => item.classList.remove(cssClass));
+  store.clear();
+}
+// *** Бегущая строка в верху экрана ***
+function css_runWT() {
+  const bufferAnim = document.querySelector('.timeout');
+  const animTip = document.querySelector('.timeout__tip');
   animTip.className = 'timeout__tip';
   bufferAnim.className = 'timeout';
   animTip.classList.add('timeout__tip_run');
   bufferAnim.classList.add('timeout_run');
 }
-function stopTimerUI() {
-  let bufferAnim = document.querySelector('.timeout');
-  let animTip = document.querySelector('.timeout__tip');
+function css_stopWT() {
+  const bufferAnim = document.querySelector('.timeout');
+  const animTip = document.querySelector('.timeout__tip');
   animTip.classList.remove('timeout__tip_run');
   bufferAnim.classList.remove('timeout_run');
 }
-
-// ***Временная подсветка кликнутых чекбоксов***
-// Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
-// Вопрос: как связать удаление .buffered с обновлением state.filters?
-// вариант 1: передавать delay в this.highlightBuffered
-// вариант 2: props.filters
-// UPD: выбрал 1. Проблемы:  
-// - отдельные таймеры (исчезают не одновременно) 
-// - нет отклика на повторный клик. 
-function highlightBuffered(e, ms) {
-  let watchingCheckbox = e.target;
-  watchingCheckbox.classList.add('buffered');
-  setTimeout(() => { watchingCheckbox.classList.remove('buffered'); }, ms)
-}
 // ***Подсветка активного таба***
-function highlightTabs(e) {
+function highlightActiveTab(e) {
   const cssClass = 'tabs__item_active';
   if (e.target.classList.contains(cssClass)) {
     return;

@@ -1,6 +1,6 @@
 import React from 'react';
 import './style.css';
-import Flight from '../Flight'
+import Flight from './Flight'
 
 export default function Ticket(props) {
   return (
