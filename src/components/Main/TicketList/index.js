@@ -1,9 +1,10 @@
 import React from 'react'
 import Ticket from './Ticket'
+import Preloader from './Preloader/Preloader'
 
 export default function TicketList(props) {
   if (!props.ticketsArray) {
-    return <p className='row'>Подождите, загружаем новые билеты</p>;
+    return <Preloader />
   }
   return (
     <div className='tickets'>
