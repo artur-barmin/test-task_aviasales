@@ -1,8 +1,6 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
-
 import './style.css'
-
 import WaitingTimer from './components/WaitingTimer'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
@@ -18,7 +16,9 @@ class App extends Component {
   }
   _timeoutBeforeSearch = 2000;
   render() {
+    // Буферизация кликов перед установкой стейта (и последующим запросом билетов)
     let handleSearchParams = bufferingDecorator(this, this._timeoutBeforeSearch);
+
     return (
       <div className='container'>
         <WaitingTimer />
@@ -39,7 +39,7 @@ class App extends Component {
       </div>
     )
   }
-  // Проверка (можно ли изменить состояние чекбокса) и возврат всех чекбоксов
+  // Проверка "можно ли изменить состояние фильтра" тк частично исключают друг друга
   getValidCheckboxes(e) {
     const FILTERS = this.state.filters;
     const id = e.target.id;
@@ -71,6 +71,39 @@ class App extends Component {
     return st.filters;
   }
 }
+
+// Буферизация кликов перед установкой стейта (и последующим запросом билетов)
+// Зачем: плохо дёргать сервер на каждое движение юзера
+// Способ: замыкания. Не повторять, ну нафиг, лучше state / shouldUpdate / ref
+const bufferingDecorator = (context, ms) => {
+
+  // Буфер состояния контролов для setState
+  const BUFFER = Object.assign({}, context.state);
+  const setStateAfterDelay = rebootableDelayDecorator(ms, null, updateState);
+
+  // WARN: отрефакторить. Буфер только чекбоксов и только для переключения
+  // CSS-класса (не вариант checked=true, тк инпуты управляемые)
+  const uiBuffer = new Set();
+  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, css_cbON, css_cbOFF);
+  // ---------------
+
+  // Бегущая строка вверху экрана
+  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, css_runWT, css_stopWT);
+
+  return (e) => {
+    // Сохранение в буфер состояния контролов на момент последнего клика
+    if (e.currentTarget.classList.contains('tabs')) {
+      BUFFER.sort = e.target.dataset.sorter;
+      highlightActiveTab(e);
+    } else {
+      BUFFER.filters = context.getValidCheckboxes(e);
+    }
+    // запуск таймера и анимации перед записью буфера в стейт
+    showWaitingTimerWhileDelay();
+    highlightCheckboxWhileDelay(uiBuffer, e);
+    setStateAfterDelay(context, BUFFER);
+  }
+}
 // хелпер для извлеченного метода bufferingDecorator
 function updateState(context, newState) {
   context.setState(() => newState);
@@ -89,37 +122,14 @@ function rebootableDelayDecorator(ms, funcStart, funcEnd) {
     }, ms);
   }
 }
-// --------------------------------------
-// Буферизация кликов перед установкой стейта (и последующим запросом билетов)
-// Зачем: плохо дёргать сервер на каждое движение юзера
-// UPD: больше не упражняться с замыканиями, ну нафиг
-const bufferingDecorator = (context, ms) => {
-  const BUFFER = Object.assign({}, context.state);
-  const UIbufferFilters = new Set();
-  const setStateAfterDelay = rebootableDelayDecorator(ms, null, updateState);
-  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, css_runWT, css_stopWT);
-  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, css_cbON, css_cbOFF);
-  return (e) => {
-    // Сохранение в буфер состояния контролов на момент последнего клика
-    if (e.currentTarget.classList.contains('tabs')) {
-      BUFFER.sort = e.target.dataset.sorter;
-      highlightActiveTab(e);
-    } else {
-      BUFFER.filters = context.getValidCheckboxes(e);
-    }
-    // запуск таймера и анимации перед записью буфера в стейт
-    showWaitingTimerWhileDelay();
-    highlightCheckboxWhileDelay(UIbufferFilters, e);
-    setStateAfterDelay(context, BUFFER);
-  }
-}
+
 // ***Подсветка кликнутых чекбоксов while delay***
 // Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
 // Проблема: это управляемый компонент
 // Как связать удаление .buffered с обновлением state.filters?
 // вариант 1: передавать delay в highlightFilterWhileDelay
 // вариант 2: props.filters
-// UPD: выбрал 1й вариант. Проблема: рассинхрон с getValidCheckboxes
+// UPD: выбрал 1й вариант, WARNING: рассинхрон с getValidCheckboxes
 function css_cbON(stor, e) {
   const cssClass = 'buffered';
   if (e.target.matches('.' + cssClass)) {
@@ -135,6 +145,7 @@ function css_cbOFF(store) {
   store.forEach(item => item.classList.remove(cssClass));
   store.clear();
 }
+
 // *** Бегущая строка в верху экрана ***
 function css_runWT() {
   const bufferAnim = document.querySelector('.timeout');
@@ -150,6 +161,7 @@ function css_stopWT() {
   animTip.classList.remove('timeout__tip_run');
   bufferAnim.classList.remove('timeout_run');
 }
+
 // ***Подсветка активного таба***
 function highlightActiveTab(e) {
   const cssClass = 'tabs__item_active';
