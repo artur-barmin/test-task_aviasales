@@ -81,7 +81,10 @@
 }
 /* рассинхрон с SASS */
 .buffered + label::before {
-  background-color:#a2d5ff;
+  /* background-color:#a2d5ff; */
+  background-image: url(./cbLoader.svg);
+  background-size: 25px;
+  background-color: #fff;
 }
 
 .filter__input:not(:disabled):not(:checked) + label:hover::before {
