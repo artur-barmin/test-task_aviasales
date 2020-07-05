@@ -8,17 +8,14 @@ import Main from './components/Main'
 import * as UI from './components/UI'
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      sort: "cheapest",
-      filters: { 
-        all: true, 
-        0: false, 
-        1: false, 
-        2: false, 
-        3: false },
-    }
+  state = {
+    sort: "cheapest",
+    filters: { 
+      all: true, 
+      0: false, 
+      1: false, 
+      2: false, 
+      3: false },
   }
   _timeoutBeforeSearch = 2000;
   render() {
