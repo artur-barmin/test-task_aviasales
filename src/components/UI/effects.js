@@ -4,7 +4,7 @@
 // Как связать удаление класса .buffered с обновлением state.filters?
 // вариант 1: передавать delay в highlightFilterWhileDelay
 // вариант 2: props.filters
-// UPD: выбрал 1й вариант, fixed: рассинхрон с getValidCheckboxes
+// UPD: выбрал 1й вариант
 export function highlightCheckboxOn(stor, e) {
   const cssClass = 'buffered';
   if (e.target.matches('.' + cssClass)) {

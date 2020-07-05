@@ -1,31 +1,7 @@
 import * as UI from './effects'
+import getValidCheckboxes from './validation'
 
-// после каждого клика перезапускает время для анимаций и setState
-const rebootableDelayDecorator = (ms, functionsStart, functionsEnd) => {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    if (functionsStart.length > 0) {
-      functionsStart.forEach(func => func(...args));
-    }
-    timer = setTimeout(() => {
-      functionsEnd.forEach(func => func(...args));
-      clearTimeout(timer);
-    }, ms);
-  }
-}
-
-
-
-// хелпер для передачи контекста bufferingDecorator
-const updateState = (context, newState) => {
-  context.setState(() => newState);
-}
-
-
-
-const bufferingDecorator = (context, ms) => {
-  
+export default function bufferingDecorator(context, ms) {
   // *Буфер сохраняет желаемые параметры поиска
   const BUFFER = Object.assign({}, context.state);
   const setStateAfterDelay = rebootableDelayDecorator(ms, [], [updateState]);
@@ -46,11 +22,28 @@ const bufferingDecorator = (context, ms) => {
       BUFFER.sort = e.target.dataset.sorter;
       UI.highlightActiveTab(e);
     } else {
-      BUFFER.filters = context.getValidCheckboxes(e);
+      BUFFER.filters = getValidCheckboxes.call(context, e);
     }
     showVisualFeedback(bufferForUI, e);
     setStateAfterDelay(context, BUFFER);
   }
 }
 
-export default bufferingDecorator;
+// после каждого клика перезапускает время для анимаций и setState
+const rebootableDelayDecorator = (ms, functionsStart, functionsEnd) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    if (functionsStart.length > 0) {
+      functionsStart.forEach(func => func(...args));
+    }
+    timer = setTimeout(() => {
+      functionsEnd.forEach(func => func(...args));
+      clearTimeout(timer);
+    }, ms);
+  }
+}
+// хелпер для передачи контекста bufferingDecorator
+const updateState = (context, newState) => {
+  context.setState(() => newState);
+}
