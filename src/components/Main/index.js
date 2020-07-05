@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import Tabs from './Tabs'
 import TicketList from './TicketList'
-import getTickets from './getTickets'
+import getTickets from './processingTickets'
 
 export default class Main extends Component {
   state = {
