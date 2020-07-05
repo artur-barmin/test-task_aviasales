@@ -5,19 +5,28 @@ import WaitingTimer from './components/WaitingTimer'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Main from './components/Main'
+import * as UI from './components/UI'
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       sort: "cheapest",
-      filters: { all: true, 0: false, 1: false, 2: false, 3: false },
+      filters: { 
+        all: true, 
+        0: false, 
+        1: false, 
+        2: false, 
+        3: false },
     }
   }
   _timeoutBeforeSearch = 2000;
   render() {
-    // Буферизация кликов перед установкой стейта (и последующим запросом билетов)
-    let handleSearchParams = bufferingDecorator(this, this._timeoutBeforeSearch);
+
+    // Дает время пользователю кликнуть нужные параметры поиска перед
+    // 1. записью нового состояния контролов в стейт
+    // 2. последующим запросом билетов (используется Main.componentDidUpdate)
+    const handleSearchParams = bufferingDecorator(this, this._timeoutBeforeSearch);
 
     return (
       <div className='container'>
@@ -84,17 +93,17 @@ const bufferingDecorator = (context, ms) => {
   // WARN: отрефакторить. Буфер только чекбоксов и только для переключения
   // CSS-класса (не вариант checked=true, тк инпуты управляемые)
   const uiBuffer = new Set();
-  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, css_cbON, css_cbOFF);
+  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, UI.css_cbON, UI.css_cbOFF);
   // ---------------
 
   // Бегущая строка вверху экрана
-  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, css_runWT, css_stopWT);
+  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, UI.css_runWT, UI.css_stopWT);
 
   return (e) => {
     // Сохранение в буфер состояния контролов на момент последнего клика
     if (e.currentTarget.classList.contains('tabs')) {
       BUFFER.sort = e.target.dataset.sorter;
-      highlightActiveTab(e);
+      UI.highlightActiveTab(e);
     } else {
       BUFFER.filters = context.getValidCheckboxes(e);
     }
@@ -108,7 +117,8 @@ const bufferingDecorator = (context, ms) => {
 function updateState(context, newState) {
   context.setState(() => newState);
 }
-// обеспечивает продлевающуюся задержку
+
+// перезапускает таймер ожидания ввода после каждого клика
 function rebootableDelayDecorator(ms, funcStart, funcEnd) {
   let timer;
   return (...args) => {
@@ -120,56 +130,6 @@ function rebootableDelayDecorator(ms, funcStart, funcEnd) {
       funcEnd(...args);
       clearTimeout(timer);
     }, ms);
-  }
-}
-
-// ***Подсветка кликнутых чекбоксов while delay***
-// Задача: мгновенный UI-фидбек на клик (переключить CSS-класс)
-// Проблема: это управляемый компонент
-// Как связать удаление .buffered с обновлением state.filters?
-// вариант 1: передавать delay в highlightFilterWhileDelay
-// вариант 2: props.filters
-// UPD: выбрал 1й вариант, WARNING: рассинхрон с getValidCheckboxes
-function css_cbON(stor, e) {
-  const cssClass = 'buffered';
-  if (e.target.matches('.' + cssClass)) {
-    stor.delete(e.target);
-    e.target.classList.remove(cssClass);
-  } else {
-    stor.add(e.target);
-    e.target.classList.add(cssClass);
-  }
-}
-function css_cbOFF(store) {
-  const cssClass = 'buffered';
-  store.forEach(item => item.classList.remove(cssClass));
-  store.clear();
-}
-
-// *** Бегущая строка в верху экрана ***
-function css_runWT() {
-  const bufferAnim = document.querySelector('.timeout');
-  const animTip = document.querySelector('.timeout__tip');
-  animTip.className = 'timeout__tip';
-  bufferAnim.className = 'timeout';
-  animTip.classList.add('timeout__tip_run');
-  bufferAnim.classList.add('timeout_run');
-}
-function css_stopWT() {
-  const bufferAnim = document.querySelector('.timeout');
-  const animTip = document.querySelector('.timeout__tip');
-  animTip.classList.remove('timeout__tip_run');
-  bufferAnim.classList.remove('timeout_run');
-}
-
-// ***Подсветка активного таба***
-function highlightActiveTab(e) {
-  const cssClass = 'tabs__item_active';
-  if (e.target.classList.contains(cssClass)) {
-    return;
-  } else {
-    e.currentTarget.querySelector('.' + cssClass).classList.remove(cssClass);
-    e.target.classList.add(cssClass);
   }
 }
 
