@@ -10,21 +10,22 @@ import * as UI from './components/UI'
 class App extends Component {
   state = {
     sort: "cheapest",
-    filters: { 
-      all: true, 
-      0: false, 
-      1: false, 
-      2: false, 
-      3: false },
+    filters: {
+      all: true,
+      0: false,
+      1: false,
+      2: false,
+      3: false
+    },
   }
   _timeoutBeforeSearch = 2000;
-  render() {
 
+  render() {
     // Дает время пользователю кликнуть нужные параметры поиска перед
     // 1. записью нового состояния контролов в стейт
     // 2. последующим запросом билетов (используется Main.componentDidUpdate)
+    // Зачем: чтобы не дергать сервер после каждого движения юзера
     const handleSearchParams = bufferingDecorator(this, this._timeoutBeforeSearch);
-
     return (
       <div className='container'>
         <WaitingTimer />
@@ -45,14 +46,17 @@ class App extends Component {
       </div>
     )
   }
+
   // Проверка "можно ли изменить состояние фильтра" тк частично исключают друг друга
   getValidCheckboxes(e) {
     const FILTERS = this.state.filters;
     const id = e.target.id;
+
     // Предотвращение состояния "все фильтры отключены"
     if (FILTERS[id] && Object.entries(FILTERS).filter(item => item[0] !== id).every(item => !item[1])) {
       return FILTERS;
     }
+
     // Отключение фильтра "Все" в случае клика по любому другому
     if (FILTERS['all'] && !FILTERS[id] && id !== 'all') {
       const st = Object.assign({}, this.state);
@@ -60,6 +64,7 @@ class App extends Component {
       st.filters[id] = !st.filters[id];
       return st.filters;
     }
+
     // Отключение всех фильтров в случае клика по "Все", кроме него
     if (id === 'all' && Object.values(FILTERS).some(item => item)) {
       const st = Object.assign({}, this.state);
@@ -71,6 +76,7 @@ class App extends Component {
       st.filters['all'] = true;
       return st.filters;
     }
+
     // Активация фильтров во всех других случаях
     const st = Object.assign({}, this.state);
     st.filters[id] = !st.filters[id];
@@ -78,55 +84,52 @@ class App extends Component {
   }
 }
 
-// Буферизация кликов перед установкой стейта (и последующим запросом билетов)
-// Зачем: плохо дёргать сервер на каждое движение юзера
-// Способ: замыкания. Не повторять, ну нафиг, лучше state / shouldUpdate / ref
+// после каждого клика перезапускает время для анимаций и setState
+const rebootableDelayDecorator = (ms, functionsStart, functionsEnd) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    if (functionsStart.length > 0) {
+      functionsStart.forEach(func => func(...args));
+    }
+    timer = setTimeout(() => {
+      functionsEnd.forEach(func => func(...args));
+      clearTimeout(timer);
+    }, ms);
+  }
+}
+
+// хелпер для передачи контекста bufferingDecorator
+const updateState = (context, newState) => {
+  context.setState(() => newState);
+}
+
 const bufferingDecorator = (context, ms) => {
-
-  // Буфер состояния контролов для setState
+  
+  // *Буфер сохраняет желаемые параметры поиска
   const BUFFER = Object.assign({}, context.state);
-  const setStateAfterDelay = rebootableDelayDecorator(ms, null, updateState);
+  const setStateAfterDelay = rebootableDelayDecorator(ms, [], [updateState]);
 
-  // WARN: отрефакторить. Буфер только чекбоксов и только для переключения
-  // CSS-класса (не вариант checked=true, тк инпуты управляемые)
-  const uiBuffer = new Set();
-  const highlightCheckboxWhileDelay = rebootableDelayDecorator(ms, UI.css_cbON, UI.css_cbOFF);
-  // ---------------
-
-  // Бегущая строка вверху экрана
-  const showWaitingTimerWhileDelay = rebootableDelayDecorator(ms, UI.css_runWT, UI.css_stopWT);
+  // *Визуальная обратная связь для юзера на время таймаута
+  // Set используется в UI.highlightCheckboxOn/Off: обработка UI отделена от состояния контролов,
+  // т.к. завязаться на стейт не вариант - есть таймаут, а обратную связь надо сразу
+  const bufferForUI = new Set();
+  const showVisualFeedback = rebootableDelayDecorator(
+    ms,
+    [UI.highlightCheckboxOn, UI.runWaitingTimer],
+    [UI.highlightCheckboxOff, UI.stopWaitingTimer]
+  );
 
   return (e) => {
-    // Сохранение в буфер состояния контролов на момент последнего клика
+    // Сохранение состояния контролов на момент ПОСЛЕДНЕГО клика
     if (e.currentTarget.classList.contains('tabs')) {
       BUFFER.sort = e.target.dataset.sorter;
       UI.highlightActiveTab(e);
     } else {
       BUFFER.filters = context.getValidCheckboxes(e);
     }
-    // запуск таймера и анимации перед записью буфера в стейт
-    showWaitingTimerWhileDelay();
-    highlightCheckboxWhileDelay(uiBuffer, e);
+    showVisualFeedback(bufferForUI, e);
     setStateAfterDelay(context, BUFFER);
-  }
-}
-// хелпер для извлеченного метода bufferingDecorator
-function updateState(context, newState) {
-  context.setState(() => newState);
-}
-
-// перезапускает таймер ожидания ввода после каждого клика
-function rebootableDelayDecorator(ms, funcStart, funcEnd) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    if (funcStart) {
-      funcStart(...args);
-    }
-    timer = setTimeout(() => {
-      funcEnd(...args);
-      clearTimeout(timer);
-    }, ms);
   }
 }
 
