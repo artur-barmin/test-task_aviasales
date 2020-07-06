@@ -20,8 +20,8 @@ export default function Filter(props) {
   return (
     <form className="form filter">
       <h3 className="form__header">Количество пересадок</h3>
-      {filters.map(item => {
-        return <FilterItem filter={item} onChange={(e) => props.onChange(e)} />
+      {filters.map((item, index) => {
+        return <FilterItem filter={item} onChange={(e) => props.onChange(e)} key={index} />
       })}
     </form>
   );
